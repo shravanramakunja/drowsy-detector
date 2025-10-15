@@ -1,0 +1,371 @@
+# Real-Time Drowsiness Detection System
+
+A comprehensive drowsiness detection system that monitors eye closure in real-time using computer vision. Available in two versions:
+1. **Standalone Desktop Application** - Python script with OpenCV window
+2. **Web-Based Application** - Modern web interface with Flask backend
+
+## Features
+
+- **Real-time Eye Detection**: Uses OpenCV's Haar Cascade classifiers
+- **No Complex Dependencies**: Works with just OpenCV, NumPy, and Pygame
+- **Audio Alert**: Plays alarm sound when drowsiness is detected
+- **Visual Feedback**: Shows live video feed with eye detection rectangles and status
+- **Adjustable Threshold**: Configure alert timing (default: 5 seconds)
+- **Web Interface**: Modern, responsive UI for easy access
+
+## Table of Contents
+- [Installation](#installation)
+- [Running the Standalone Application](#running-the-standalone-application)
+- [Running the Web Application](#running-the-web-application)
+- [Troubleshooting](#troubleshooting)
+- [How It Works](#how-it-works)
+
+---
+
+## Installation
+
+### Prerequisites
+- Python 3.7 or higher
+- Webcam (built-in or external)
+- Windows/Mac/Linux operating system
+
+### Step 1: Clone or Download the Project
+
+Download this project to your computer or clone it:
+```bash
+cd C:\Users\YourName\Desktop
+# The project should be in: C:\Users\YourName\Desktop\drowsiness
+```
+
+### Step 2: Install Python Dependencies
+
+Open a terminal (PowerShell on Windows) in the project directory and run:
+
+```bash
+pip install -r requirements.txt
+```
+
+This will install:
+- `opencv-python` - Computer vision library
+- `numpy` - Numerical computing
+- `pygame` - Audio playback
+- `flask` - Web framework (for web version)
+- `flask-cors` - Cross-origin support (for web version)
+
+**Note**: If you encounter issues installing packages, try:
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+---
+
+## Running the Standalone Application
+
+The standalone application opens a desktop window with the camera feed.
+
+### Step-by-Step Instructions:
+
+#### **Step 1**: Open Terminal/PowerShell
+
+Navigate to the project directory:
+```bash
+cd C:\Users\Shravan\OneDrive\Desktop\drowsiness
+```
+
+#### **Step 2**: Run the Python Script
+
+```bash
+python drowsiness.py
+```
+
+Or if you have multiple Python versions:
+```bash
+python3 drowsiness.py
+```
+
+Or use the full path:
+```bash
+C:/Users/Shravan/AppData/Local/Programs/Python/Python312/python.exe drowsiness.py
+```
+
+#### **Step 3**: Using the Application
+
+1. **Camera Window Opens**: A window titled "Drowsiness Detection" will appear
+2. **Position Your Face**: Sit in front of the camera with good lighting
+3. **Green Rectangles**: Show detected eyes when open
+4. **Blue Rectangle**: Shows detected face
+5. **Status Display**: Bottom of screen shows:
+   - Status: Active/ALERT
+   - Eyes: Open/Closed (X.Xs)
+
+#### **Step 4**: Test the System
+
+1. **Close your eyes** for more than 5 seconds
+2. **Alarm will sound** - loud beeping noise
+3. **"DROWSINESS ALERT!"** appears in red
+4. **Open your eyes** to stop the alarm
+
+#### **Step 5**: Exit the Application
+
+Press **'q'** or **'t'** key on your keyboard while the window is active
+
+---
+
+## Running the Web Application
+
+The web application provides a modern browser-based interface with better UI/UX.
+
+### Step-by-Step Instructions:
+
+#### **Step 1**: Open Terminal/PowerShell
+
+Navigate to the project directory:
+```bash
+cd C:\Users\Shravan\OneDrive\Desktop\drowsiness
+```
+
+#### **Step 2**: Start the Flask Backend Server
+
+```bash
+python app.py
+```
+
+Or with full path:
+```bash
+C:/Users/Shravan/AppData/Local/Programs/Python/Python312/python.exe app.py
+```
+
+You should see output like:
+```
+============================================================
+Smart Driver Hub - Drowsiness Detection Backend
+============================================================
+
+[INFO] Starting Flask server...
+[INFO] Access the web interface at: http://localhost:5000
+[INFO] Press Ctrl+C to stop the server
+
+ * Running on http://0.0.0.0:5000
+```
+
+#### **Step 3**: Open Your Web Browser
+
+Open any modern web browser and go to:
+```
+http://localhost:5000
+```
+
+Or click this link: [http://localhost:5000](http://localhost:5000)
+
+#### **Step 4**: Using the Web Interface
+
+1. **Homepage**: You'll see the Smart Driver Hub homepage
+2. **Scroll Down**: Navigate to the "Start Drowsiness Detection" section
+3. **Read Instructions**: Review the "How It Works" panel
+4. **Adjust Settings** (optional):
+   - Alert Threshold: 3-10 seconds (default: 5)
+   - Alarm Volume: 0-100% (default: 80%)
+   - Enable/Disable Sound Alerts
+
+#### **Step 5**: Start Detection
+
+1. Click the **"Start Detection"** button (green with play icon)
+2. **Camera will initialize** (may take 2-3 seconds)
+3. **Video feed appears** showing your face with detection overlays
+4. **Status Panel Updates**:
+   - Status: Active
+   - Eye State: Open/Closed
+   - Timer: Shows duration eyes are closed
+
+#### **Step 6**: Test the System
+
+1. **Close your eyes** and watch the timer count up
+2. **Timer shows**: "0.0s", "1.2s", "2.5s"... up to threshold
+3. **At 5 seconds**: 
+   - Red "DROWSINESS ALERT!" box appears
+   - Alarm sound plays
+   - Status changes to "ALERT!"
+4. **Open eyes**: Timer resets, alarm stops
+
+#### **Step 7**: Stop Detection
+
+Click the **"Stop Detection"** button (red with stop icon)
+
+#### **Step 8**: Close the Server
+
+In the terminal/PowerShell window, press **Ctrl+C** to stop the Flask server
+
+---
+
+## Troubleshooting
+
+### Camera Not Working
+
+**Problem**: "Could not open webcam" or "Failed to grab frame"
+
+**Solutions**:
+1. **Check camera permissions**: 
+   - Windows: Settings > Privacy > Camera > Allow apps to access camera
+   - Make sure Python is allowed
+2. **Close other camera apps**: 
+   - Skype, Zoom, Teams, Discord
+   - Only one app can use camera at a time
+3. **Try different camera index**:
+   - Edit the code to try camera 0, 1, or 2
+4. **Restart your computer**: Sometimes helps reset camera drivers
+
+### Module Not Found Errors
+
+**Problem**: `ModuleNotFoundError: No module named 'opencv'` or similar
+
+**Solution**:
+```bash
+# Reinstall all dependencies
+pip uninstall opencv-python numpy pygame flask flask-cors
+pip install -r requirements.txt
+
+# Or install individually
+pip install opencv-python
+pip install numpy
+pip install pygame
+pip install flask flask-cors
+```
+
+### No Sound/Alarm
+
+**Problem**: Alarm doesn't play when eyes are closed
+
+**Solutions**:
+1. **Check system volume**: Make sure it's not muted
+2. **Check Python volume**: 
+   - Windows: Volume Mixer > Python
+3. **Web version**: 
+   - Check "Enable Sound Alerts" checkbox is enabled
+   - Adjust "Alarm Volume" slider
+4. **Test speakers**: Play music to verify speakers work
+
+### Web Application: Can't Connect to Backend
+
+**Problem**: "Unable to connect to backend server"
+
+**Solutions**:
+1. **Verify server is running**: 
+   - Check terminal shows "Running on http://0.0.0.0:5000"
+2. **Check correct URL**: Use `http://localhost:5000` not `https://`
+3. **Firewall**: May need to allow Python through firewall
+4. **Port conflict**: Another app might be using port 5000
+   - Edit `app.py` line with `port=5000` to use different port
+
+### Eyes Not Detected
+
+**Problem**: System doesn't detect eyes even when open
+
+**Solutions**:
+1. **Improve lighting**: Face should be well-lit
+2. **Remove glasses**: Can interfere with detection
+3. **Position face**: Look directly at camera, not at angle
+4. **Camera distance**: Sit 1-3 feet from camera
+5. **Clean camera lens**: Remove any smudges
+
+### Detection Too Sensitive or Not Sensitive Enough
+
+**Solution**: Adjust the threshold
+
+**Standalone version**: Edit `drowsiness.py` line:
+```python
+self.EYE_CLOSED_SECONDS = 5  # Change to 3-10 seconds
+```
+
+**Web version**: Use the slider in the settings panel (3-10 seconds)
+
+---
+
+## How It Works
+
+### Detection Algorithm
+
+1. **Face Detection**: Uses Haar Cascade classifier to find faces
+2. **Eye Detection**: Searches upper half of face for eyes
+3. **Eye State Monitoring**: 
+   - If 2+ eyes detected → Eyes are OPEN
+   - If <2 eyes detected → Eyes are CLOSED
+4. **Timer Tracking**: Measures how long eyes stay closed
+5. **Alert Triggering**: If closed > threshold → Alarm sounds
+
+### Technical Stack
+
+- **Python 3.12**: Programming language
+- **OpenCV**: Computer vision library for face/eye detection
+- **NumPy**: Numerical operations
+- **Pygame**: Audio playback for alarm
+- **Flask**: Web server framework (web version)
+- **HTML/CSS/JavaScript**: Frontend interface (web version)
+
+### File Structure
+
+```
+drowsiness/
+├── drowsiness.py          # Standalone desktop application
+├── app.py                 # Flask backend server
+├── requirements.txt       # Python dependencies
+├── README.md             # This file
+└── web/                  # Web interface files
+    ├── index.html        # Main HTML page
+    ├── styles.css        # Styling
+    ├── script.js         # Frontend JavaScript
+    └── README.md         # Web-specific docs
+```
+
+---
+
+## Parameters
+
+### Adjustable Settings
+
+| Parameter | Default | Range | Description |
+|-----------|---------|-------|-------------|
+| `EYE_CLOSED_SECONDS` | 5 | 3-10 | Seconds before alarm triggers |
+| Alarm Volume | 80% | 0-100% | Loudness of alarm sound |
+| Sound Enable | On | On/Off | Enable/disable audio alerts |
+
+### Keyboard Shortcuts (Standalone)
+
+| Key | Action |
+|-----|--------|
+| `q` | Quit application |
+| `t` | Quit application |
+
+---
+
+## Requirements
+
+- Python 3.7+
+- Webcam
+- Good lighting conditions
+- Clear view of face
+
+---
+
+## Credits
+
+Built for Smart Driver Hub Drowsiness Detection System
+
+
+## Troubleshooting
+
+**Error: Could not open webcam**
+- Check if camera is connected
+- Ensure no other application is using the camera
+
+**Error: shape_predictor file not found**
+- Download the predictor file as mentioned in installation steps
+
+**Low detection accuracy**
+- Improve lighting conditions
+- Adjust camera position for clear face view
+- Try adjusting `EAR_THRESHOLD` value
+
+## Credits
+
+Based on the Eye Aspect Ratio method for drowsiness detection.
