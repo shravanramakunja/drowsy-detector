@@ -169,49 +169,6 @@
             </div>
         </section>
 
-        <!-- Fuel Prediction Modal -->
-        <div id="fuelModal" class="modal" style="display:none;">
-            <div class="modal-content">
-                <span class="close" onclick="closeFuelModal()">&times;</span>
-                <h3>Predict Fuel Efficiency (Demo)</h3>
-                <p>Enter basic vehicle info to see a demo estimate.</p>
-                <div class="form-grid">
-                    <label>Engine Size (L)</label>
-                    <input id="engineSize" type="number" step="0.1" value="2.0">
-                    <label>Vehicle Weight (kg)</label>
-                    <input id="vehicleWeight" type="number" value="1500">
-                    <label>Horsepower (HP)</label>
-                    <input id="horsepower" type="number" value="140">
-                    <label>Transmission (0=Auto,1=Manual)</label>
-                    <input id="transmission" type="number" value="0">
-                    <label>Vehicle Type</label>
-                    <select id="vehicleType">
-                        <option value="sedan" selected>Sedan</option>
-                        <option value="suv">SUV</option>
-                        <option value="hatchback">Hatchback</option>
-                        <option value="truck">Truck</option>
-                        <option value="coupe">Coupe</option>
-                        <option value="electric">Electric</option>
-                    </select>
-                </div>
-                <div class="progress-bar" id="predictProgress" style="display:none;">
-                    <div class="progress-fill" id="progressFill" style="width:0%"></div>
-                </div>
-                <div class="result-box" id="predictResult" style="display:none;">
-                    <h4>Estimated Fuel Efficiency</h4>
-                    <p id="fuelValue">-- km/l</p>
-                    <div class="result-stats">
-                        <div>City: <strong id="cityVal">--</strong></div>
-                        <div>Highway: <strong id="highwayVal">--</strong></div>
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button class="btn btn-primary" onclick="runFuelPrediction()">Predict</button>
-                    <button class="btn" onclick="resetFuelModal()">Reset</button>
-                </div>
-            </div>
-        </div>
-
         <!-- About Section -->
         <section id="about" class="about">
             <h2 class="section-title">About This System</h2>

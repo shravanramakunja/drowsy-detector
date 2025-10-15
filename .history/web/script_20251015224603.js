@@ -232,7 +232,6 @@ function runFuelPrediction() {
     const wt = parseFloat(document.getElementById('vehicleWeight').value) || 1500;
     const hp = parseFloat(document.getElementById('horsepower').value) || 140;
     const tx = parseInt(document.getElementById('transmission').value) || 0;
-    const vtype = document.getElementById('vehicleType') ? document.getElementById('vehicleType').value : 'sedan';
 
     // Show progress
     const progress = document.getElementById('predictProgress');
@@ -248,39 +247,15 @@ function runFuelPrediction() {
         fill.style.width = p + '%';
         if (p >= 100) {
             clearInterval(timer);
-            // Compute a dummy km/l value based on inputs and vehicle type
-            const typeMultiplier = (() => {
-                switch (vtype) {
-                    case 'suv': return 0.85;
-                    case 'truck': return 0.7;
-                    case 'hatchback': return 1.05;
-                    case 'coupe': return 0.95;
-                    case 'electric': return 1.4;
-                    default: return 1.0; // sedan
-                }
-            })();
-
-            const baseCity = Math.max(4, (110 - (wt / 120)) / (eng / 1.6));
-            const baseHighway = Math.max(7, baseCity * 1.2 + hp / 220);
-            const city = (baseCity * typeMultiplier * (tx === 1 ? 1.05 : 1.0)).toFixed(1);
-            const highway = (baseHighway * typeMultiplier * (tx === 1 ? 1.03 : 1.0)).toFixed(1);
-            const overall = (((parseFloat(city) + parseFloat(highway)) / 2)).toFixed(1);
+            // Show dummy results based on simple heuristic
+            const city = Math.max(5, (100 - (wt / 100)) / (eng / 1.5));
+            const highway = Math.max(8, city * 1.25 + hp / 200);
+            const overall = ((city + highway) / 2).toFixed(1);
 
             document.getElementById('fuelValue').textContent = overall + ' km/l';
-            document.getElementById('cityVal').textContent = city + ' km/l';
-            document.getElementById('highwayVal').textContent = highway + ' km/l';
+            document.getElementById('cityVal').textContent = city.toFixed(1) + ' km/l';
+            document.getElementById('highwayVal').textContent = highway.toFixed(1) + ' km/l';
             document.getElementById('predictResult').style.display = 'block';
-
-            // Append or update vehicle type label
-            const resultBox = document.getElementById('predictResult');
-            let existing = resultBox.querySelector('.vehicle-type');
-            if (!existing) {
-                existing = document.createElement('div');
-                existing.className = 'vehicle-type';
-                existing.style.marginTop = '8px';
-                resultBox.appendChild(existing);
-            }
-            existing.innerHTML = '<small>Vehicle Type: <strong>' + vtype.charAt(0).toUpperCase() + vtype.slice(1) + '</strong></small>';
         }
     }, 300);
 }
