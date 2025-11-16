@@ -194,6 +194,16 @@
                         <option value="electric">Electric</option>
                     </select>
                 </div>
+                <div class="form-grid" style="margin-top:12px;">
+                    <label>Sample Dataset</label>
+                    <select id="sampleDataset">
+                        <option value="">-- Select Sample --</option>
+                    </select>
+                    <div style="grid-column: 1 / -1; display:flex; gap:8px; margin-top:6px;">
+                        <button class="btn btn-secondary" id="loadSampleBtn" onclick="loadSelectedSample()">Load Sample</button>
+                        <button class="btn" id="randomSampleBtn" onclick="loadRandomSample()">Random Sample</button>
+                    </div>
+                </div>
                 <div class="progress-bar" id="predictProgress" style="display:none;">
                     <div class="progress-fill" id="progressFill" style="width:0%"></div>
                 </div>
