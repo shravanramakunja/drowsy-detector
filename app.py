@@ -306,7 +306,8 @@ if __name__ == '__main__':
     print("[INFO] Press Ctrl+C to stop the server\n")
     
     try:
-        app.run(debug=True, host='0.0.0.0', port=5000, threaded=True)
+        # Disable the debug reloader to avoid watching site-packages (watchdog restarts)
+        app.run(debug=False, use_reloader=False, host='0.0.0.0', port=5000, threaded=True)
     except KeyboardInterrupt:
         print("\n[INFO] Shutting down server...")
         detector.stop_camera()

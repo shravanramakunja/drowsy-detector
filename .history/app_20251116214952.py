@@ -248,7 +248,12 @@ detector = DrowsinessDetector()
 @app.route('/')
 def index():
     """Serve the main page"""
-    return render_template('index.html')
+    return send_from_directory(WEB_DIR, 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    """Serve static files"""
+    return send_from_directory(WEB_DIR, path)
 
 @app.route('/video_feed')
 def video_feed():
@@ -301,7 +306,8 @@ if __name__ == '__main__':
     print("[INFO] Press Ctrl+C to stop the server\n")
     
     try:
-        app.run(debug=True, host='0.0.0.0', port=5000, threaded=True)
+        # Disable the debug reloader to avoid watching site-packages (watchdog restarts)
+        app.run(debug=False, use_reloader=False, host='0.0.0.0', port=5000, threaded=True)
     except KeyboardInterrupt:
         print("\n[INFO] Shutting down server...")
         detector.stop_camera()
