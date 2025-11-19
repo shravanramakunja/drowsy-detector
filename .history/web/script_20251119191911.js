@@ -385,16 +385,10 @@ function resetFuelModal() {
 }
 
 // ==================== FUEL EFFICIENCY PREDICTION ====================
-// Uses Random Forest ML model trained on 38,113 real vehicle records
+// Uses Random Forest ML model trained on 38,000+ real vehicle records
 // Backend processes: dataset/fuel.csv → feature engineering → RF prediction
 // Features: engine_cylinders, displacement, transmission, class, drive, fuel_type
 // Outputs: City km/l, Highway km/l, Combined km/l
-// 
-// Model Performance (validated on 7,623 test samples):
-//   - Combined Model: R² = 0.9612, RMSE = 1.15 km/l, MAE = 0.74 km/l
-//   - Highway Model: R² = 0.9568, RMSE = 1.31 km/l, MAE = 0.89 km/l
-//   - City Model:    R² = 0.9534, RMSE = 1.23 km/l, MAE = 0.81 km/l
-//   - Prediction accuracy: ~96% (within 1 km/l on average)
 
 async function runFuelPrediction() {
     // Read user inputs from form
