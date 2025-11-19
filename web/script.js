@@ -317,8 +317,8 @@ function resetFuelModal() {
     document.getElementById('progressFill').style.width = '0%';
 }
 
-function runFuelPrediction() {
-    // Read inputs (not used for real model; demo only)
+async function runFuelPrediction() {
+    // Read inputs
     const eng = parseFloat(document.getElementById('engineSize').value) || 2.0;
     const wt = parseFloat(document.getElementById('vehicleWeight').value) || 1500;
     const hp = parseFloat(document.getElementById('horsepower').value) || 140;
@@ -332,37 +332,46 @@ function runFuelPrediction() {
     fill.style.width = '0%';
     document.getElementById('predictResult').style.display = 'none';
 
+    // Animate progress bar
     let p = 0;
-    const timer = setInterval(() => {
-        p += Math.random() * 20;
-        if (p >= 100) p = 100;
+    const progressTimer = setInterval(() => {
+        p += Math.random() * 15;
+        if (p >= 90) p = 90; // Stop at 90% until we get response
         fill.style.width = p + '%';
-        if (p >= 100) {
-            clearInterval(timer);
-            // Compute a dummy km/l value based on inputs and vehicle type
-            const typeMultiplier = (() => {
-                switch (vtype) {
-                    case 'suv': return 0.85;
-                    case 'truck': return 0.7;
-                    case 'hatchback': return 1.05;
-                    case 'coupe': return 0.95;
-                    case 'electric': return 1.4;
-                    default: return 1.0; // sedan
-                }
-            })();
+    }, 100);
 
-            const baseCity = Math.max(4, (110 - (wt / 120)) / (eng / 1.6));
-            const baseHighway = Math.max(7, baseCity * 1.2 + hp / 220);
-            const city = (baseCity * typeMultiplier * (tx === 1 ? 1.05 : 1.0)).toFixed(1);
-            const highway = (baseHighway * typeMultiplier * (tx === 1 ? 1.03 : 1.0)).toFixed(1);
-            const overall = (((parseFloat(city) + parseFloat(highway)) / 2)).toFixed(1);
+    try {
+        // Call backend ML prediction API
+        const response = await fetch(`${API_BASE_URL}/predict_fuel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                engine: eng,
+                weight: wt,
+                horsepower: hp,
+                transmission: tx,
+                vehicle_type: vtype
+            })
+        });
 
-            document.getElementById('fuelValue').textContent = overall + ' km/l';
-            document.getElementById('cityVal').textContent = city + ' km/l';
-            document.getElementById('highwayVal').textContent = highway + ' km/l';
+        const data = await response.json();
+
+        // Complete progress bar
+        clearInterval(progressTimer);
+        fill.style.width = '100%';
+
+        if (data.success && data.prediction) {
+            // Display ML predictions
+            const pred = data.prediction;
+            
+            document.getElementById('fuelValue').textContent = pred.overall + ' km/l';
+            document.getElementById('cityVal').textContent = pred.city + ' km/l';
+            document.getElementById('highwayVal').textContent = pred.highway + ' km/l';
             document.getElementById('predictResult').style.display = 'block';
 
-            // Append or update vehicle type label
+            // Append or update vehicle type and model info
             const resultBox = document.getElementById('predictResult');
             let existing = resultBox.querySelector('.vehicle-type');
             if (!existing) {
@@ -371,7 +380,21 @@ function runFuelPrediction() {
                 existing.style.marginTop = '8px';
                 resultBox.appendChild(existing);
             }
-            existing.innerHTML = '<small>Vehicle Type: <strong>' + vtype.charAt(0).toUpperCase() + vtype.slice(1) + '</strong></small>';
+            existing.innerHTML = '<small>Vehicle Type: <strong>' + vtype.charAt(0).toUpperCase() + vtype.slice(1) + 
+                                '</strong> | Model: <strong>' + data.model + '</strong></small>';
+            
+            setTimeout(() => {
+                progress.style.display = 'none';
+                fill.style.width = '0%';
+            }, 1000);
+        } else {
+            alert('Prediction failed: ' + (data.message || 'Unknown error'));
+            progress.style.display = 'none';
         }
-    }, 300);
+    } catch (error) {
+        clearInterval(progressTimer);
+        console.error('Prediction error:', error);
+        alert('Unable to connect to prediction service. Please ensure the Flask server is running.');
+        progress.style.display = 'none';
+    }
 }

@@ -6,6 +6,11 @@ import pygame
 from threading import Thread
 import time
 import os
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+import pandas as pd
+import random
 
 # Get the directory of this file
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -245,6 +250,243 @@ class DrowsinessDetector:
 # Create global detector instance
 detector = DrowsinessDetector()
 
+# ==================== FUEL EFFICIENCY PREDICTOR ====================
+
+class FuelEfficiencyPredictor:
+    def __init__(self):
+        self.model_city = None
+        self.model_highway = None
+        self.model_combined = None
+        self.is_trained = False
+        self.label_encoders = {}
+        self.vehicle_type_mapping = {
+            'sedan': 'Midsize Cars',
+            'suv': 'Sport Utility Vehicle',
+            'hatchback': 'Compact Cars',
+            'truck': 'Standard Pickup Trucks',
+            'coupe': 'Two Seaters',
+            'electric': 'Midsize Cars'
+        }
+        self.train_model()
+    
+    def load_and_preprocess_data(self):
+        """Load fuel.csv dataset and preprocess for training"""
+        print("[INFO] Loading dataset from fuel.csv...")
+        
+        try:
+            dataset_path = os.path.join(BASE_DIR, 'dataset', 'fuel.csv')
+            df = pd.read_csv(dataset_path)
+            
+            print(f"[INFO] Loaded {len(df)} records from dataset")
+            
+            # Select relevant features and clean data
+            df_clean = df[[
+                'engine_cylinders',
+                'engine_displacement',
+                'transmission_type',
+                'class',
+                'drive',
+                'fuel_type',
+                'city_mpg_ft1',
+                'highway_mpg_ft1',
+                'miles_per_gallon'
+            ]].copy()
+            
+            # Remove rows with missing critical values
+            df_clean = df_clean.dropna(subset=['city_mpg_ft1', 'highway_mpg_ft1', 'miles_per_gallon'])
+            df_clean = df_clean[df_clean['city_mpg_ft1'] > 0]
+            df_clean = df_clean[df_clean['highway_mpg_ft1'] > 0]
+            
+            # Convert MPG to km/l (1 MPG ≈ 0.425 km/l)
+            df_clean['city_kml'] = df_clean['city_mpg_ft1'] * 0.425144
+            df_clean['highway_kml'] = df_clean['highway_mpg_ft1'] * 0.425144
+            df_clean['combined_kml'] = df_clean['miles_per_gallon'] * 0.425144
+            
+            # Fill missing values
+            df_clean['engine_cylinders'] = df_clean['engine_cylinders'].fillna(4)
+            df_clean['engine_displacement'] = df_clean['engine_displacement'].fillna(2.0)
+            df_clean['transmission_type'] = df_clean['transmission_type'].fillna('Automatic')
+            df_clean['class'] = df_clean['class'].fillna('Midsize Cars')
+            df_clean['drive'] = df_clean['drive'].fillna('2-Wheel Drive')
+            df_clean['fuel_type'] = df_clean['fuel_type'].fillna('Regular')
+            
+            print(f"[INFO] Preprocessed {len(df_clean)} valid records")
+            return df_clean
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to load dataset: {e}")
+            print("[INFO] Falling back to synthetic data generation...")
+            return None
+    
+    def train_model(self):
+        """Train Random Forest models using real dataset"""
+        print("[INFO] Training Random Forest models...")
+        
+        # Load real dataset
+        df = self.load_and_preprocess_data()
+        
+        if df is None or len(df) < 100:
+            print("[WARNING] Insufficient data for training")
+            self.is_trained = False
+            return
+        
+        # Prepare features
+        # Encode categorical variables
+        self.label_encoders['transmission'] = LabelEncoder()
+        self.label_encoders['class'] = LabelEncoder()
+        self.label_encoders['drive'] = LabelEncoder()
+        self.label_encoders['fuel_type'] = LabelEncoder()
+        
+        df['transmission_encoded'] = self.label_encoders['transmission'].fit_transform(
+            df['transmission_type'].astype(str)
+        )
+        df['class_encoded'] = self.label_encoders['class'].fit_transform(
+            df['class'].astype(str)
+        )
+        df['drive_encoded'] = self.label_encoders['drive'].fit_transform(
+            df['drive'].astype(str)
+        )
+        df['fuel_encoded'] = self.label_encoders['fuel_type'].fit_transform(
+            df['fuel_type'].astype(str)
+        )
+        
+        # Feature matrix
+        X = df[[
+            'engine_cylinders',
+            'engine_displacement',
+            'transmission_encoded',
+            'class_encoded',
+            'drive_encoded',
+            'fuel_encoded'
+        ]].values
+        
+        # Target variables
+        y_city = df['city_kml'].values
+        y_highway = df['highway_kml'].values
+        y_combined = df['combined_kml'].values
+        
+        # Train models
+        print("[INFO] Training City MPG model...")
+        self.model_city = RandomForestRegressor(
+            n_estimators=150,
+            max_depth=15,
+            min_samples_split=5,
+            min_samples_leaf=2,
+            random_state=42,
+            n_jobs=-1
+        )
+        self.model_city.fit(X, y_city)
+        
+        print("[INFO] Training Highway MPG model...")
+        self.model_highway = RandomForestRegressor(
+            n_estimators=150,
+            max_depth=15,
+            min_samples_split=5,
+            min_samples_leaf=2,
+            random_state=42,
+            n_jobs=-1
+        )
+        self.model_highway.fit(X, y_highway)
+        
+        print("[INFO] Training Combined MPG model...")
+        self.model_combined = RandomForestRegressor(
+            n_estimators=150,
+            max_depth=15,
+            min_samples_split=5,
+            min_samples_leaf=2,
+            random_state=42,
+            n_jobs=-1
+        )
+        self.model_combined.fit(X, y_combined)
+        
+        self.is_trained = True
+        print(f"[INFO] Models trained successfully on {len(df)} samples!")
+        print(f"[INFO] Feature importance (Combined): {self.model_combined.feature_importances_}")
+    
+    def predict(self, engine, weight, horsepower, transmission, vehicle_type):
+        """Predict fuel efficiency for given vehicle parameters"""
+        if not self.is_trained:
+            return None
+        
+        try:
+            # Map frontend vehicle type to dataset class
+            vehicle_class = self.vehicle_type_mapping.get(vehicle_type, 'Midsize Cars')
+            
+            # Estimate cylinders from engine displacement
+            cylinders = 4
+            if engine >= 4.0:
+                cylinders = 8
+            elif engine >= 2.5:
+                cylinders = 6
+            
+            # Determine drive type (simplified)
+            drive = '2-Wheel Drive'
+            if vehicle_type in ['suv', 'truck']:
+                drive = '4-Wheel or All-Wheel Drive'
+            
+            # Fuel type
+            fuel_type = 'Electricity' if vehicle_type == 'electric' else 'Regular'
+            
+            # Transmission type
+            trans_type = 'Manual' if transmission == 1 else 'Automatic'
+            
+            # Encode categorical features
+            try:
+                trans_encoded = self.label_encoders['transmission'].transform([trans_type])[0]
+            except:
+                trans_encoded = 0
+            
+            try:
+                class_encoded = self.label_encoders['class'].transform([vehicle_class])[0]
+            except:
+                class_encoded = 0
+            
+            try:
+                drive_encoded = self.label_encoders['drive'].transform([drive])[0]
+            except:
+                drive_encoded = 0
+            
+            try:
+                fuel_encoded = self.label_encoders['fuel_type'].transform([fuel_type])[0]
+            except:
+                fuel_encoded = 0
+            
+            # Create feature vector
+            features = np.array([[
+                cylinders,
+                engine,
+                trans_encoded,
+                class_encoded,
+                drive_encoded,
+                fuel_encoded
+            ]])
+            
+            # Predict
+            city = float(self.model_city.predict(features)[0])
+            highway = float(self.model_highway.predict(features)[0])
+            combined = float(self.model_combined.predict(features)[0])
+            
+            # Ensure realistic values
+            city = max(4.0, min(40.0, city))
+            highway = max(5.0, min(50.0, highway))
+            combined = max(4.5, min(45.0, combined))
+            
+            return {
+                'city': round(city, 1),
+                'highway': round(highway, 1),
+                'overall': round(combined, 1)
+            }
+        except Exception as e:
+            print(f"[ERROR] Prediction failed: {e}")
+            return None
+
+# Initialize fuel predictor
+print("\n" + "="*60)
+print("Fuel Efficiency Predictor - Machine Learning Module")
+print("="*60)
+fuel_predictor = FuelEfficiencyPredictor()
+print("="*60 + "\n")
+
 @app.route('/')
 def index():
     """Serve the main page"""
@@ -294,6 +536,34 @@ def update_threshold():
         threshold = int(data.get('threshold', 5))
         detector.update_threshold(threshold)
         return jsonify({'success': True, 'threshold': threshold})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/predict_fuel', methods=['POST'])
+def predict_fuel_efficiency():
+    """Predict fuel efficiency using Random Forest model"""
+    try:
+        data = request.get_json()
+        
+        engine = float(data.get('engine', 2.0))
+        weight = int(data.get('weight', 1500))
+        horsepower = int(data.get('horsepower', 140))
+        transmission = int(data.get('transmission', 0))
+        vehicle_type = data.get('vehicle_type', 'sedan')
+        
+        # Predict using ML model
+        prediction = fuel_predictor.predict(engine, weight, horsepower, transmission, vehicle_type)
+        
+        if prediction:
+            return jsonify({
+                'success': True,
+                'prediction': prediction,
+                'model': 'Random Forest',
+                'message': 'Prediction completed successfully'
+            })
+        else:
+            return jsonify({'success': False, 'message': 'Model not trained'}), 500
+            
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
