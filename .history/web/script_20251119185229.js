@@ -480,19 +480,8 @@ async function runFuelPrediction() {
         }
     } catch (error) {
         clearInterval(progressTimer);
-        console.error('[PREDICT] Connection error:', error);
-        alert('Unable to connect to ML prediction service.\n\nPlease ensure:\n1. Flask server is running (python app.py)\n2. Server is accessible at http://localhost:5000\n3. Dataset file (fuel.csv) is loaded');
+        console.error('Prediction error:', error);
+        alert('Unable to connect to prediction service. Please ensure the Flask server is running.');
         progress.style.display = 'none';
-        fill.style.width = '0%';
     }
 }
-
-// Add CSS animation for result display
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-`;
-document.head.appendChild(style);

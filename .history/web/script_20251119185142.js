@@ -145,54 +145,29 @@ function loadSelectedSample() {
     const sel = document.getElementById('sampleDataset');
     const idx = sel ? sel.value : '';
     if (idx === '') {
-        alert('Please select a sample vehicle from the dropdown.');
+        alert('Please select a sample dataset first.');
         return;
     }
     const p = sampleProfiles[parseInt(idx)];
     if (!p) return;
-    
-    console.log(`[INFO] Loading sample: ${p.name} (${p.type})`);
     applyProfileToForm(p);
-    
-    // Run prediction automatically using ML model
-    setTimeout(() => runFuelPrediction(), 300);
+    // Run prediction automatically for convenience
+    runFuelPrediction();
 }
 
 function loadRandomSample() {
-    if (sampleProfiles.length === 0) {
-        alert('No sample vehicles available.');
-        return;
-    }
-    
     const p = pick(sampleProfiles);
-    console.log(`[INFO] Loading random sample: ${p.name} (${p.type})`);
     applyProfileToForm(p);
-    
-    // Run prediction automatically
-    setTimeout(() => runFuelPrediction(), 300);
+    runFuelPrediction();
 }
 
 function applyProfileToForm(p) {
-    // Populate form fields with vehicle profile data
     document.getElementById('engineSize').value = p.engine;
     document.getElementById('vehicleWeight').value = p.weight;
     document.getElementById('horsepower').value = p.horsepower;
     document.getElementById('transmission').value = p.transmission;
-    
     const vt = document.getElementById('vehicleType');
     if (vt) vt.value = p.type;
-    
-    // Visual feedback
-    const inputs = ['engineSize', 'vehicleWeight', 'horsepower', 'transmission'];
-    inputs.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.style.backgroundColor = '#e8f5e9';
-            setTimeout(() => { el.style.backgroundColor = ''; }, 1000);
-        }
-    });
-    
-    console.log(`[INFO] Applied profile: Engine ${p.engine}L, Weight ${p.weight}kg, HP ${p.horsepower}, Trans ${p.transmission}`);
 }
 
 // Start detection
@@ -384,21 +359,13 @@ function resetFuelModal() {
     document.getElementById('progressFill').style.width = '0%';
 }
 
-// ==================== FUEL EFFICIENCY PREDICTION ====================
-// Uses Random Forest ML model trained on 38,000+ real vehicle records
-// Backend processes: dataset/fuel.csv → feature engineering → RF prediction
-// Features: engine_cylinders, displacement, transmission, class, drive, fuel_type
-// Outputs: City km/l, Highway km/l, Combined km/l
-
 async function runFuelPrediction() {
-    // Read user inputs from form
+    // Read inputs
     const eng = parseFloat(document.getElementById('engineSize').value) || 2.0;
     const wt = parseFloat(document.getElementById('vehicleWeight').value) || 1500;
     const hp = parseFloat(document.getElementById('horsepower').value) || 140;
     const tx = parseInt(document.getElementById('transmission').value) || 0;
     const vtype = document.getElementById('vehicleType') ? document.getElementById('vehicleType').value : 'sedan';
-    
-    console.log(`[PREDICT] Starting prediction for: ${vtype}, ${eng}L, ${wt}kg, ${hp}HP, Trans:${tx}`);
 
     // Show progress
     const progress = document.getElementById('predictProgress');
@@ -438,61 +405,38 @@ async function runFuelPrediction() {
         fill.style.width = '100%';
 
         if (data.success && data.prediction) {
-            // Display ML predictions from Random Forest model
+            // Display ML predictions
             const pred = data.prediction;
-            
-            console.log(`[PREDICT] Success! City: ${pred.city}, Highway: ${pred.highway}, Overall: ${pred.overall}`);
             
             document.getElementById('fuelValue').textContent = pred.overall + ' km/l';
             document.getElementById('cityVal').textContent = pred.city + ' km/l';
             document.getElementById('highwayVal').textContent = pred.highway + ' km/l';
             document.getElementById('predictResult').style.display = 'block';
 
-            // Display vehicle type, model info, and dataset source
+            // Append or update vehicle type and model info
             const resultBox = document.getElementById('predictResult');
             let existing = resultBox.querySelector('.vehicle-type');
             if (!existing) {
                 existing = document.createElement('div');
                 existing.className = 'vehicle-type';
                 existing.style.marginTop = '8px';
-                existing.style.fontSize = '0.9em';
-                existing.style.color = '#666';
                 resultBox.appendChild(existing);
             }
-            existing.innerHTML = '<small>Vehicle: <strong>' + vtype.charAt(0).toUpperCase() + vtype.slice(1) + 
-                                '</strong> | ML Model: <strong>' + data.model + '</strong> | Dataset: <strong>38,113 vehicles</strong></small>';
+            existing.innerHTML = '<small>Vehicle Type: <strong>' + vtype.charAt(0).toUpperCase() + vtype.slice(1) + 
+                                '</strong> | Model: <strong>' + data.model + '</strong></small>';
             
-            // Fade out progress bar
             setTimeout(() => {
                 progress.style.display = 'none';
                 fill.style.width = '0%';
             }, 1000);
-            
-            // Add subtle animation to result
-            resultBox.style.animation = 'none';
-            setTimeout(() => {
-                resultBox.style.animation = 'fadeIn 0.5s ease-in';
-            }, 10);
         } else {
-            console.error('[PREDICT] Failed:', data.message);
             alert('Prediction failed: ' + (data.message || 'Unknown error'));
             progress.style.display = 'none';
         }
     } catch (error) {
         clearInterval(progressTimer);
-        console.error('[PREDICT] Connection error:', error);
-        alert('Unable to connect to ML prediction service.\n\nPlease ensure:\n1. Flask server is running (python app.py)\n2. Server is accessible at http://localhost:5000\n3. Dataset file (fuel.csv) is loaded');
+        console.error('Prediction error:', error);
+        alert('Unable to connect to prediction service. Please ensure the Flask server is running.');
         progress.style.display = 'none';
-        fill.style.width = '0%';
     }
 }
-
-// Add CSS animation for result display
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-`;
-document.head.appendChild(style);

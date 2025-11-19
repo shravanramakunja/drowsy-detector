@@ -438,61 +438,38 @@ async function runFuelPrediction() {
         fill.style.width = '100%';
 
         if (data.success && data.prediction) {
-            // Display ML predictions from Random Forest model
+            // Display ML predictions
             const pred = data.prediction;
-            
-            console.log(`[PREDICT] Success! City: ${pred.city}, Highway: ${pred.highway}, Overall: ${pred.overall}`);
             
             document.getElementById('fuelValue').textContent = pred.overall + ' km/l';
             document.getElementById('cityVal').textContent = pred.city + ' km/l';
             document.getElementById('highwayVal').textContent = pred.highway + ' km/l';
             document.getElementById('predictResult').style.display = 'block';
 
-            // Display vehicle type, model info, and dataset source
+            // Append or update vehicle type and model info
             const resultBox = document.getElementById('predictResult');
             let existing = resultBox.querySelector('.vehicle-type');
             if (!existing) {
                 existing = document.createElement('div');
                 existing.className = 'vehicle-type';
                 existing.style.marginTop = '8px';
-                existing.style.fontSize = '0.9em';
-                existing.style.color = '#666';
                 resultBox.appendChild(existing);
             }
-            existing.innerHTML = '<small>Vehicle: <strong>' + vtype.charAt(0).toUpperCase() + vtype.slice(1) + 
-                                '</strong> | ML Model: <strong>' + data.model + '</strong> | Dataset: <strong>38,113 vehicles</strong></small>';
+            existing.innerHTML = '<small>Vehicle Type: <strong>' + vtype.charAt(0).toUpperCase() + vtype.slice(1) + 
+                                '</strong> | Model: <strong>' + data.model + '</strong></small>';
             
-            // Fade out progress bar
             setTimeout(() => {
                 progress.style.display = 'none';
                 fill.style.width = '0%';
             }, 1000);
-            
-            // Add subtle animation to result
-            resultBox.style.animation = 'none';
-            setTimeout(() => {
-                resultBox.style.animation = 'fadeIn 0.5s ease-in';
-            }, 10);
         } else {
-            console.error('[PREDICT] Failed:', data.message);
             alert('Prediction failed: ' + (data.message || 'Unknown error'));
             progress.style.display = 'none';
         }
     } catch (error) {
         clearInterval(progressTimer);
-        console.error('[PREDICT] Connection error:', error);
-        alert('Unable to connect to ML prediction service.\n\nPlease ensure:\n1. Flask server is running (python app.py)\n2. Server is accessible at http://localhost:5000\n3. Dataset file (fuel.csv) is loaded');
+        console.error('Prediction error:', error);
+        alert('Unable to connect to prediction service. Please ensure the Flask server is running.');
         progress.style.display = 'none';
-        fill.style.width = '0%';
     }
 }
-
-// Add CSS animation for result display
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-`;
-document.head.appendChild(style);
