@@ -367,11 +367,6 @@ class FuelEfficiencyPredictor:
         y_highway = df['highway_kml'].values
         y_combined = df['combined_kml'].values
         
-        # Split data for training and testing (80/20 split)
-        X_train, X_test, y_city_train, y_city_test = train_test_split(X, y_city, test_size=0.2, random_state=42)
-        _, _, y_highway_train, y_highway_test = train_test_split(X, y_highway, test_size=0.2, random_state=42)
-        _, _, y_combined_train, y_combined_test = train_test_split(X, y_combined, test_size=0.2, random_state=42)
-        
         # Train models
         print("[INFO] Training City MPG model...")
         self.model_city = RandomForestRegressor(
@@ -382,7 +377,7 @@ class FuelEfficiencyPredictor:
             random_state=42,
             n_jobs=-1
         )
-        self.model_city.fit(X_train, y_city_train)
+        self.model_city.fit(X, y_city)
         
         print("[INFO] Training Highway MPG model...")
         self.model_highway = RandomForestRegressor(
@@ -393,7 +388,7 @@ class FuelEfficiencyPredictor:
             random_state=42,
             n_jobs=-1
         )
-        self.model_highway.fit(X_train, y_highway_train)
+        self.model_highway.fit(X, y_highway)
         
         print("[INFO] Training Combined MPG model...")
         self.model_combined = RandomForestRegressor(
@@ -404,50 +399,10 @@ class FuelEfficiencyPredictor:
             random_state=42,
             n_jobs=-1
         )
-        self.model_combined.fit(X_train, y_combined_train)
-        
-        # Evaluate models on test set
-        print("\n[INFO] Model Evaluation Results:")
-        print("="*50)
-        
-        # City model evaluation
-        y_city_pred = self.model_city.predict(X_test)
-        city_r2 = r2_score(y_city_test, y_city_pred)
-        city_rmse = np.sqrt(mean_squared_error(y_city_test, y_city_pred))
-        city_mae = mean_absolute_error(y_city_test, y_city_pred)
-        
-        print(f"City Fuel Efficiency Model:")
-        print(f"  R² Score: {city_r2:.4f}")
-        print(f"  RMSE: {city_rmse:.2f} km/l")
-        print(f"  MAE: {city_mae:.2f} km/l")
-        
-        # Highway model evaluation
-        y_highway_pred = self.model_highway.predict(X_test)
-        highway_r2 = r2_score(y_highway_test, y_highway_pred)
-        highway_rmse = np.sqrt(mean_squared_error(y_highway_test, y_highway_pred))
-        highway_mae = mean_absolute_error(y_highway_test, y_highway_pred)
-        
-        print(f"\nHighway Fuel Efficiency Model:")
-        print(f"  R² Score: {highway_r2:.4f}")
-        print(f"  RMSE: {highway_rmse:.2f} km/l")
-        print(f"  MAE: {highway_mae:.2f} km/l")
-        
-        # Combined model evaluation
-        y_combined_pred = self.model_combined.predict(X_test)
-        combined_r2 = r2_score(y_combined_test, y_combined_pred)
-        combined_rmse = np.sqrt(mean_squared_error(y_combined_test, y_combined_pred))
-        combined_mae = mean_absolute_error(y_combined_test, y_combined_pred)
-        
-        print(f"\nCombined Fuel Efficiency Model:")
-        print(f"  R² Score: {combined_r2:.4f}")
-        print(f"  RMSE: {combined_rmse:.2f} km/l")
-        print(f"  MAE: {combined_mae:.2f} km/l")
-        
-        print("="*50)
+        self.model_combined.fit(X, y_combined)
         
         self.is_trained = True
-        print(f"\n[INFO] Models trained successfully on {len(X_train)} training samples!")
-        print(f"[INFO] Models validated on {len(X_test)} test samples!")
+        print(f"[INFO] Models trained successfully on {len(df)} samples!")
         print(f"[INFO] Feature importance (Combined): {self.model_combined.feature_importances_}")
     
     def predict(self, engine, weight, horsepower, transmission, vehicle_type):
